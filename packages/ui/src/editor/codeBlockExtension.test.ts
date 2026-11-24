@@ -4,7 +4,7 @@ import { Editor } from "@tiptap/core";
 import { TextSelection } from "@tiptap/pm/state";
 import StarterKit from "@tiptap/starter-kit";
 import { afterEach, describe, expect, it } from "vitest";
-import { MarkyCodeBlock } from "./CodeBlockExtension";
+import { codeBlockLanguages, MarkyCodeBlock } from "./CodeBlockExtension";
 
 const editors: Editor[] = [];
 
@@ -60,6 +60,14 @@ describe("code block editor extension", () => {
 			attrs: { language: "python" },
 			content: [{ type: "text", text: "print('ok')    " }],
 		});
+	});
+});
+
+describe("code block language picker", () => {
+	it("offers YAML exactly once", () => {
+		expect(codeBlockLanguages).toContainEqual({ value: "yaml", label: "YAML" });
+		const values = codeBlockLanguages.map((option) => option.value);
+		expect(new Set(values).size).toBe(values.length);
 	});
 });
 

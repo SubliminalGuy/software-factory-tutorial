@@ -224,13 +224,14 @@ async function copyCodeBlock(text: string) {
 	}
 }
 
-const codeBlockLanguages = [
+export const codeBlockLanguages = [
 	{ value: "", label: "Plain text" },
 	{ value: "js", label: "JavaScript" },
 	{ value: "ts", label: "TypeScript" },
 	{ value: "jsx", label: "JSX" },
 	{ value: "tsx", label: "TSX" },
 	{ value: "json", label: "JSON" },
+	{ value: "yaml", label: "YAML" },
 	{ value: "css", label: "CSS" },
 	{ value: "html", label: "HTML" },
 	{ value: "md", label: "Markdown" },
