@@ -147,8 +147,23 @@ export function useSidebarTree({
 	const collapseFolder = (id: string) => setExpanded(id, false);
 	const toggleFolder = (id: string) =>
 		setExpanded(id, !expandedFolders.has(id));
+	const expandAllFolders = () =>
+		setExpandedState({
+			key: storageKey,
+			folders: new Set(collectFolderIds(tree)),
+		});
+	const collapseAllFolders = () =>
+		setExpandedState({ key: storageKey, folders: new Set() });
 
-	return { collapseFolder, expandFolder, rows, toggleFolder };
+	return {
+		collapseAllFolders,
+		collapseFolder,
+		expandAllFolders,
+		expandFolder,
+		hasFolders: tree.folders.size > 0,
+		rows,
+		toggleFolder,
+	};
 }
 
 function makeFolder(id: string, name: string): FolderNode {
@@ -200,6 +215,15 @@ export function buildFileTree(
 	}
 
 	return root;
+}
+
+function collectFolderIds(node: FolderNode): string[] {
+	const ids: string[] = [];
+	for (const child of node.folders.values()) {
+		ids.push(child.id);
+		ids.push(...collectFolderIds(child));
+	}
+	return ids;
 }
 
 function ensureFolder(parent: FolderNode, name: string): FolderNode {

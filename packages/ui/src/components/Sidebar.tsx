@@ -35,6 +35,7 @@ import MingcuteCopy2Line from "~icons/mingcute/copy-2-line";
 import MingcuteDeleteLine from "~icons/mingcute/delete-line";
 import MingcuteEditLine from "~icons/mingcute/edit-line";
 import MingcuteExternalLinkLine from "~icons/mingcute/external-link-line";
+import MingcuteFoldVerticalLine from "~icons/mingcute/fold-vertical-line";
 import MingcuteFolderOpenLine from "~icons/mingcute/folder-open-line";
 import MingcuteMore2Line from "~icons/mingcute/more-2-line";
 import MingcuteNewFolderLine from "~icons/mingcute/new-folder-line";
@@ -42,6 +43,7 @@ import MingcutePinFill from "~icons/mingcute/pin-fill";
 import MingcutePinLine from "~icons/mingcute/pin-line";
 import MingcuteRightLine from "~icons/mingcute/right-line";
 import MingcuteSortDescendingLine from "~icons/mingcute/sort-descending-line";
+import MingcuteUnfoldVerticalLine from "~icons/mingcute/unfold-vertical-line";
 import { useResizeSeparator } from "../hooks/useResizeSeparator";
 import { isEditableEventTarget } from "../lib/dom";
 import {
@@ -517,7 +519,15 @@ export function Sidebar({
 	const list = children ? "children" : "tree";
 	const uncompactFolderId =
 		deleteOnCancel?.kind === "folder" ? deleteOnCancel.path : null;
-	const { collapseFolder, expandFolder, rows, toggleFolder } = useSidebarTree({
+	const {
+		collapseAllFolders,
+		collapseFolder,
+		expandAllFolders,
+		expandFolder,
+		hasFolders,
+		rows,
+		toggleFolder,
+	} = useSidebarTree({
 		files,
 		folders,
 		getDisplayPath,
@@ -1382,6 +1392,28 @@ export function Sidebar({
 								>
 									<MingcuteNewFolderLine className="size-3.5" />
 								</Button>
+							)}
+							{hasFolders && (
+								<>
+									<Button
+										variant="ghost"
+										size="icon-xs"
+										aria-label="Expand all folders"
+										title="Expand all folders"
+										onClick={expandAllFolders}
+									>
+										<MingcuteUnfoldVerticalLine className="size-3.5" />
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon-xs"
+										aria-label="Collapse all folders"
+										title="Collapse all folders"
+										onClick={collapseAllFolders}
+									>
+										<MingcuteFoldVerticalLine className="size-3.5" />
+									</Button>
+								</>
 							)}
 							<Select.Root
 								value={sortMode}

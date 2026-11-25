@@ -249,6 +249,72 @@ describe("useSidebarTree", () => {
 		);
 		expect(folderRow(harness.current.rows, "gamma/delta/").expanded).toBe(true);
 	});
+
+	it("expandAllFolders reveals every nested folder row", () => {
+		const harness = renderTree({ files: nestedFiles });
+
+		expect(filePaths(harness.current.rows)).not.toContain(
+			"/workspace/alpha/beta/one.md",
+		);
+
+		act(() => harness.current.expandAllFolders());
+
+		expect(filePaths(harness.current.rows)).toEqual(
+			expect.arrayContaining([
+				"/workspace/alpha/beta/one.md",
+				"/workspace/gamma/delta/two.md",
+			]),
+		);
+		expect(folderRow(harness.current.rows, "alpha/beta/").expanded).toBe(true);
+		expect(folderRow(harness.current.rows, "gamma/delta/").expanded).toBe(true);
+	});
+
+	it("collapseAllFolders collapses every folder across rerenders", () => {
+		const harness = renderTree({ files: nestedFiles });
+
+		act(() => harness.current.expandAllFolders());
+		act(() => harness.current.collapseAllFolders());
+
+		expect(filePaths(harness.current.rows)).not.toContain(
+			"/workspace/alpha/beta/one.md",
+		);
+
+		harness.rerender({ files: [...nestedFiles] });
+
+		expect(filePaths(harness.current.rows)).not.toContain(
+			"/workspace/alpha/beta/one.md",
+		);
+	});
+
+	it("persists expandAllFolders under the workspace storage key", () => {
+		const harness = renderTree({
+			files: nestedFiles,
+			storageScope: "/workspace",
+		});
+
+		act(() => harness.current.expandAllFolders());
+
+		expect(
+			JSON.parse(
+				localStorage.getItem("marky-sidebar-expanded-folders:/workspace") ??
+					"[]",
+			),
+		).toEqual(expect.arrayContaining(["alpha/", "alpha/beta/"]));
+	});
+
+	it("persists collapseAllFolders as an empty expanded set", () => {
+		const harness = renderTree({
+			files: nestedFiles,
+			storageScope: "/workspace",
+		});
+
+		act(() => harness.current.expandAllFolders());
+		act(() => harness.current.collapseAllFolders());
+
+		expect(
+			localStorage.getItem("marky-sidebar-expanded-folders:/workspace"),
+		).toBe("[]");
+	});
 });
 
 const nestedFiles: SidebarFile[] = [
