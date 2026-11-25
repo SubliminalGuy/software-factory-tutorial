@@ -365,6 +365,13 @@ const sidebarRowContentClass =
 	"flex min-w-0 flex-1 items-center gap-1 [padding-block:var(--row-pad-block)] [padding-inline-end:1.25rem] text-start text-[length:var(--font-size-sidebar)]";
 const sidebarRowActionButtonClass =
 	"inline-flex size-5 shrink-0 items-center justify-center rounded-sm border border-transparent bg-transparent text-current opacity-0 outline-hidden transition-opacity group-hover/sidebar-row:opacity-100 aria-expanded:opacity-100 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/40";
+/** Dispatched on `window` to expand every sidebar folder at once (View menu). */
+export const SIDEBAR_EXPAND_ALL_FOLDERS_EVENT =
+	"marky:sidebar-expand-all-folders";
+/** Dispatched on `window` to collapse every sidebar folder at once (View menu). */
+export const SIDEBAR_COLLAPSE_ALL_FOLDERS_EVENT =
+	"marky:sidebar-collapse-all-folders";
+
 const DEFAULT_SIDEBAR_WIDTH = 220;
 const MIN_SIDEBAR_WIDTH = 180;
 const MAX_SIDEBAR_WIDTH = 360;
@@ -517,7 +524,14 @@ export function Sidebar({
 	const list = children ? "children" : "tree";
 	const uncompactFolderId =
 		deleteOnCancel?.kind === "folder" ? deleteOnCancel.path : null;
-	const { collapseFolder, expandFolder, rows, toggleFolder } = useSidebarTree({
+	const {
+		collapseAll,
+		collapseFolder,
+		expandAll,
+		expandFolder,
+		rows,
+		toggleFolder,
+	} = useSidebarTree({
 		files,
 		folders,
 		getDisplayPath,
@@ -751,6 +765,20 @@ export function Sidebar({
 			sidebarFocusTarget({ rows, focusedIndex, selectedKeys }),
 		);
 	}, [focusedIndex, onFocusedItemChange, rows, selectedKeys]);
+
+	// The View menu reaches the shared sidebar through window events, so the
+	// desktop app needs no props threaded down to the tree's expansion state.
+	useEffect(() => {
+		window.addEventListener(SIDEBAR_EXPAND_ALL_FOLDERS_EVENT, expandAll);
+		window.addEventListener(SIDEBAR_COLLAPSE_ALL_FOLDERS_EVENT, collapseAll);
+		return () => {
+			window.removeEventListener(SIDEBAR_EXPAND_ALL_FOLDERS_EVENT, expandAll);
+			window.removeEventListener(
+				SIDEBAR_COLLAPSE_ALL_FOLDERS_EVENT,
+				collapseAll,
+			);
+		};
+	}, [collapseAll, expandAll]);
 
 	useEffect(() => {
 		if (!pendingFocusDisplayPath) return;

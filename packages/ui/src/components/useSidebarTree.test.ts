@@ -234,6 +234,57 @@ describe("useSidebarTree", () => {
 		expect(folderRow(harness.current.rows, "alpha/beta/").expanded).toBe(false);
 	});
 
+	it("expandAll expands every folder, including compacted chains, and persists", () => {
+		const harness = renderTree({
+			files: [
+				{ path: "/workspace/deeply/nested/folder/one.md", modifiedAt: 1 },
+			],
+			storageScope: "expand-all",
+		});
+
+		act(() => harness.current.expandAll());
+
+		const persisted = new Set(
+			JSON.parse(
+				localStorage.getItem("marky-sidebar-expanded-folders:expand-all") ??
+					"[]",
+			) as string[],
+		);
+		expect(persisted).toEqual(
+			new Set(["deeply/", "deeply/nested/", "deeply/nested/folder/"]),
+		);
+		expect(filePaths(harness.current.rows)).toContain(
+			"/workspace/deeply/nested/folder/one.md",
+		);
+		expect(
+			folderRow(harness.current.rows, "deeply/nested/folder/").expanded,
+		).toBe(true);
+	});
+
+	it("collapseAll collapses every folder and persists the empty set", () => {
+		const harness = renderTree({
+			files: nestedFiles,
+			storageScope: "collapse-all",
+		});
+
+		act(() => harness.current.expandAll());
+		expect(filePaths(harness.current.rows)).toContain(
+			"/workspace/alpha/beta/one.md",
+		);
+
+		act(() => harness.current.collapseAll());
+
+		expect(filePaths(harness.current.rows)).not.toContain(
+			"/workspace/alpha/beta/one.md",
+		);
+		expect(
+			JSON.parse(
+				localStorage.getItem("marky-sidebar-expanded-folders:collapse-all") ??
+					"null",
+			),
+		).toEqual([]);
+	});
+
 	it("auto-expands the ancestor chain when highlightPath changes", () => {
 		const harness = renderTree({
 			files: nestedFiles,

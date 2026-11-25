@@ -147,8 +147,25 @@ export function useSidebarTree({
 	const collapseFolder = (id: string) => setExpanded(id, false);
 	const toggleFolder = (id: string) =>
 		setExpanded(id, !expandedFolders.has(id));
+	// Bulk ops replace the whole set, so they need no read-modify-write guard.
+	const expandAll = () => {
+		setExpandedState({
+			key: storageKey,
+			folders: new Set(collectFolderIds(tree)),
+		});
+	};
+	const collapseAll = () => {
+		setExpandedState({ key: storageKey, folders: new Set() });
+	};
 
-	return { collapseFolder, expandFolder, rows, toggleFolder };
+	return {
+		collapseAll,
+		collapseFolder,
+		expandAll,
+		expandFolder,
+		rows,
+		toggleFolder,
+	};
 }
 
 function makeFolder(id: string, name: string): FolderNode {
@@ -350,6 +367,15 @@ const nameCollator = new Intl.Collator(undefined, {
 
 function compareNames(a: string, b: string) {
 	return nameCollator.compare(a, b) || a.localeCompare(b);
+}
+
+/** Every folder id in the tree, parents before children. */
+function collectFolderIds(node: FolderNode): string[] {
+	const ids: string[] = [];
+	for (const folder of node.folders.values()) {
+		ids.push(folder.id, ...collectFolderIds(folder));
+	}
+	return ids;
 }
 
 function getFolderAncestorIds(displayPath: string): Set<string> {

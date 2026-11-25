@@ -10,6 +10,8 @@ export {
 } from "./components/GlobalSearchPalette";
 export { NewNoteButton } from "./components/NewNoteButton";
 export {
+	SIDEBAR_COLLAPSE_ALL_FOLDERS_EVENT,
+	SIDEBAR_EXPAND_ALL_FOLDERS_EVENT,
 	Sidebar,
 	type SidebarDeleteItem,
 	type SidebarFile,
