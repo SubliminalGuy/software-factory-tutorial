@@ -958,6 +958,19 @@ function buildMenu() {
 					click: () => resetWindowZoom(mainWindow),
 				},
 				{ type: "separator" },
+				{
+					id: "expand-all-folders",
+					label: "Expand All Folders",
+					enabled: menuState.hasWorkspace,
+					click: () => sendToRenderer("desktop:menu-expand-all-folders"),
+				},
+				{
+					id: "collapse-all-folders",
+					label: "Collapse All Folders",
+					enabled: menuState.hasWorkspace,
+					click: () => sendToRenderer("desktop:menu-collapse-all-folders"),
+				},
+				{ type: "separator" },
 				commandMenuItem("app.toggle-terminal", () =>
 					sendToRenderer("desktop:menu-toggle-terminal"),
 				),

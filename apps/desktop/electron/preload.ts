@@ -173,6 +173,10 @@ const desktopApi = {
 		subscribe("desktop:menu-previous-tab", callback),
 	onMenuToggleSourceMode: (callback) =>
 		subscribe("desktop:menu-toggle-source-mode", callback),
+	onMenuExpandAllFolders: (callback) =>
+		subscribe("desktop:menu-expand-all-folders", callback),
+	onMenuCollapseAllFolders: (callback) =>
+		subscribe("desktop:menu-collapse-all-folders", callback),
 	onUndoDelete: (callback) => subscribe("desktop:undo-delete", callback),
 	onWindowFocus: (callback) => subscribe("desktop:window-focus", callback),
 	onFullScreenChange: (callback) =>

@@ -18,6 +18,8 @@ import {
 	OPEN_COMMAND_PALETTE_EVENT,
 	type PaletteFile,
 	PlainTextEditor,
+	SIDEBAR_COLLAPSE_ALL_FOLDERS_EVENT,
+	SIDEBAR_EXPAND_ALL_FOLDERS_EVENT,
 	type SpellcheckStatus,
 	type WikiTarget,
 } from "@marky/ui";
@@ -538,6 +540,16 @@ function App() {
 					return;
 				}
 				setViewerMode(current.viewMode === "source" ? "rich" : "source");
+			}),
+			// The sidebar tree owns its expansion state; the menu reaches it
+			// through window events so the shared UI stays desktop-agnostic.
+			desktopApi.onMenuExpandAllFolders(() => {
+				window.dispatchEvent(new CustomEvent(SIDEBAR_EXPAND_ALL_FOLDERS_EVENT));
+			}),
+			desktopApi.onMenuCollapseAllFolders(() => {
+				window.dispatchEvent(
+					new CustomEvent(SIDEBAR_COLLAPSE_ALL_FOLDERS_EVENT),
+				);
 			}),
 		];
 		return () => {

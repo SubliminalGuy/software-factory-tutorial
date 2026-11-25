@@ -5,7 +5,12 @@ import { act, type ComponentProps, type ReactNode, useState } from "react";
 // needs createRoot's render/unmount surface.
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Sidebar, type SidebarFile } from "./Sidebar";
+import {
+	SIDEBAR_COLLAPSE_ALL_FOLDERS_EVENT,
+	SIDEBAR_EXPAND_ALL_FOLDERS_EVENT,
+	Sidebar,
+	type SidebarFile,
+} from "./Sidebar";
 
 type Root = {
 	render(children: ReactNode): void;
@@ -54,6 +59,56 @@ describe("Sidebar", () => {
 		await act(async () => button?.click());
 		expect(onSelectFile).toHaveBeenCalledWith("note.md");
 	});
+	it("expands and collapses all folders from the window events", () => {
+		const container = document.createElement("div");
+		document.body.append(container);
+		const root = createRoot(container);
+		roots.push(root);
+		act(() =>
+			root.render(
+				<Sidebar
+					files={[
+						{
+							path: "/workspace/deeply/nested/folder/one.md",
+							modifiedAt: 1,
+						},
+						{ path: "/workspace/loose.md", modifiedAt: 2 },
+					]}
+					currentPath={null}
+					sortMode="alpha"
+					getDisplayPath={(path) => path.replace("/workspace/", "")}
+					onSortModeChange={() => {}}
+					onSelectFile={() => {}}
+				/>,
+			),
+		);
+
+		const expandedFolders = () =>
+			Array.from(
+				container.querySelectorAll<HTMLDivElement>(
+					'[role="treeitem"][aria-expanded="true"]',
+				),
+			).map((row) => row.querySelector("button")?.textContent);
+		const fileNames = () =>
+			Array.from(container.querySelectorAll("button"))
+				.map((button) => button.textContent)
+				.filter((label) => label?.endsWith(".md"));
+
+		expect(expandedFolders()).toEqual([]);
+
+		act(() => {
+			window.dispatchEvent(new CustomEvent(SIDEBAR_EXPAND_ALL_FOLDERS_EVENT));
+		});
+		expect(expandedFolders()).toEqual(["deeply/nested/folder"]);
+		expect(fileNames()).toEqual(["one.md", "loose.md"]);
+
+		act(() => {
+			window.dispatchEvent(new CustomEvent(SIDEBAR_COLLAPSE_ALL_FOLDERS_EVENT));
+		});
+		expect(expandedFolders()).toEqual([]);
+		expect(fileNames()).toEqual(["loose.md"]);
+	});
+
 	it("continues editing after a new note name is submitted", async () => {
 		const onRenameFile = vi.fn();
 		renderSidebar(onRenameFile);
