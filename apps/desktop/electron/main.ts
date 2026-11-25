@@ -18,6 +18,7 @@ import chokidar, { type FSWatcher } from "chokidar";
 import {
 	app,
 	BrowserWindow,
+	clipboard,
 	dialog,
 	ipcMain,
 	Menu,
@@ -53,6 +54,7 @@ import {
 import type { ThemePreference } from "../src/theme";
 import { DeleteUndo } from "./deleteUndo";
 import { setupErrorReporting } from "./errorReporting";
+import { assetPathFromUrl, imageCopyTarget } from "./imageContextMenu";
 import { readNotePreviews } from "./notePreviews";
 import { setupTerminalIpc } from "./terminal";
 import {
@@ -640,15 +642,6 @@ function sendToRenderer(channel: string, ...args: unknown[]) {
 	mainWindow?.webContents.send(channel, ...args);
 }
 
-function assetPathFromUrl(url: URL): string {
-	const queryPath = url.searchParams.get("path");
-	if (queryPath) return queryPath;
-	const encodedPath = url.pathname.startsWith("/")
-		? url.pathname.slice(1)
-		: url.pathname;
-	return decodeURIComponent(encodedPath);
-}
-
 function assetContentType(filePath: string): string {
 	switch (path.extname(filePath).toLowerCase()) {
 		case ".css":
@@ -763,10 +756,10 @@ const textContextMenuItems: TextContextMenuItem[] = [
 	{ role: "selectAll", flag: "canSelectAll" },
 ];
 
-function buildTextContextMenu(
+function editContextMenuItems(
 	webContents: Electron.WebContents,
 	params: Electron.ContextMenuParams,
-) {
+): Electron.MenuItemConstructorOptions[] {
 	const spellingItems: Electron.MenuItemConstructorOptions[] =
 		params.misspelledWord.length > 0
 			? [
@@ -812,13 +805,52 @@ function buildTextContextMenu(
 					},
 		);
 
-	return Menu.buildFromTemplate([...spellingItems, ...editItems]);
+	return [...spellingItems, ...editItems];
 }
 
-function registerTextContextMenu(window: BrowserWindow) {
+function buildTextContextMenu(
+	webContents: Electron.WebContents,
+	params: Electron.ContextMenuParams,
+) {
+	return Menu.buildFromTemplate(editContextMenuItems(webContents, params));
+}
+
+function buildImageContextMenu(
+	webContents: Electron.WebContents,
+	params: Electron.ContextMenuParams,
+) {
+	const items: Electron.MenuItemConstructorOptions[] = [
+		{
+			label: "Copy Image",
+			click: () => webContents.copyImageAt(params.x, params.y),
+		},
+	];
+	const target = imageCopyTarget(params.srcURL);
+	if (target) {
+		items.push({
+			label: target.kind === "path" ? "Copy Image Path" : "Copy Image Address",
+			click: () =>
+				clipboard.writeText(
+					target.kind === "path" ? target.path : target.address,
+				),
+		});
+	}
+	// Inside the editor an image keeps its editing menu, like Chrome; in
+	// read-only views only the image actions apply.
+	const editItems: Electron.MenuItemConstructorOptions[] = params.isEditable
+		? [{ type: "separator" }, ...editContextMenuItems(webContents, params)]
+		: [];
+	return Menu.buildFromTemplate([...items, ...editItems]);
+}
+
+function registerContextMenu(window: BrowserWindow) {
 	window.webContents.on("context-menu", (_event, params) => {
-		if (!params.isEditable) return;
-		buildTextContextMenu(window.webContents, params).popup({
+		const isImage = params.mediaType === "image";
+		if (!isImage && !params.isEditable) return;
+		const menu = isImage
+			? buildImageContextMenu(window.webContents, params)
+			: buildTextContextMenu(window.webContents, params);
+		menu.popup({
 			window,
 			// macOS needs the originating frame to attach Writing Tools and text services.
 			frame: params.frame ?? undefined,
@@ -1097,7 +1129,7 @@ async function createWindow() {
 		}
 	});
 	window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-	registerTextContextMenu(window);
+	registerContextMenu(window);
 	if (windowState.isFullScreen) {
 		window.setFullScreen(true);
 	} else if (windowState.isMaximized) {
